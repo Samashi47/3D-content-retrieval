@@ -173,3 +173,5 @@ cython_debug/
 # 3d models
 3D models/
 pyopengl/
+query_models/
+Thumbnails/
