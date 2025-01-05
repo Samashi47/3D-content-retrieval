@@ -42,7 +42,7 @@ def login():
     email = data["email"]
     dotenv.load_dotenv()
     client = MongoClient(os.getenv("MONGO_URL"))
-    db = client["RSSCN7"]
+    db = client["3DPotteryDataset"]
     collection = db["accounts"]
     user = collection.find_one({"email": email})
     if not user:
@@ -63,7 +63,7 @@ def login():
         )
         payload = {
             "email": "test@test.com",
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1)
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1),
         }
         token = jwt.encode(payload, key, algorithm="RS256")
 
@@ -84,7 +84,7 @@ def register():
     email = data["email"]
     dotenv.load_dotenv()
     client = MongoClient(os.getenv("MONGO_URL"))
-    db = client["RSSCN7"]
+    db = client["3DPotteryDataset"]
     collection = db["accounts"]
     user = collection.find_one({"email": email})
     if user:
