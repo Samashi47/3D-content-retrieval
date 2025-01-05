@@ -179,7 +179,9 @@ class MomentsCalculator:
         F = F.transpose()
         return F[F >= 0]
 
-def zernike_moments(points, faces, order=3, scale_input=True):
+def zernike_moments(model, order=3, scale_input=True):
+    points = model.vertices
+    faces = model.faces
     if isinstance(points, list):
         points = np.array(points)
     if isinstance(faces, list):
@@ -197,3 +199,11 @@ def zernike_moments(points, faces, order=3, scale_input=True):
     descriptors = calculator.feature_extraction(Z, order).tolist()
 
     return descriptors
+
+def compute_distance_zernike(desc1: np.ndarray, desc2: np.ndarray, metric: str = 'l1') -> float:
+    if metric == 'l1':
+        return np.sum(np.abs(desc1 - desc2))
+    elif metric == 'l2':
+        return np.sqrt(np.sum((desc1 - desc2) ** 2))
+    else:
+        raise ValueError("Unsupported metric. Use 'l1' or 'l2'.")
