@@ -1,0 +1,140 @@
+<mat-stepper [linear]="isLinear" #stepper>
+  <mat-step [stepControl]="secondFormGroup">
+    <div class="upload-form-container">
+      <form
+        [formGroup]="firstFormGroup"
+        class="upload-form"
+        (submit)="submitFile()"
+      >
+        <ng-template matStepLabel>Upload your 3D objects</ng-template>
+        <mat-form-field class="input-container">
+          <input
+            matInput
+            [value]="objFileName"
+            placeholder="Select your 3D object"
+            readonly
+          />
+
+          <button mat-icon-button color="primary" class="upload-btn">
+            <mat-icon>attach_file</mat-icon>
+          </button>
+          <input
+            type="file"
+            accept=".obj"
+            id="ObjFileInput"
+            name="ObjFileInput"
+            class="file-input"
+            formControlName="firstCtrl"
+            (change)="updateObjFileName($event)"
+            required
+          />
+        </mat-form-field>
+
+        <mat-form-field class="input-container">
+          <input
+            matInput
+            [value]="fileThumbnailName"
+            placeholder="Select the object's thumbnail"
+            readonly
+          />
+
+          <button mat-icon-button color="primary" class="upload-btn">
+            <mat-icon>attach_file</mat-icon>
+          </button>
+          <input
+            type="file"
+            accept="image/*"
+            id="fileThumbnailInput"
+            name="fileThumbnailInput"
+            class="file-input"
+            formControlName="secondCtrl"
+            (change)="updateThumbnailFileName($event)"
+            required
+          />
+        </mat-form-field>
+        <button mat-button [disabled]="firstFormGroup.invalid" type="submit">
+          Upload
+        </button>
+      </form>
+      <form [formGroup]="secondFormGroup">
+        <input type="hidden" formControlName="secondCtrl" required />
+        <button
+          mat-button
+          matStepperNext
+          [disabled]="
+            secondFormGroup.invalid || !(this.uploadedFiles.length > 0)
+          "
+        >
+          Next
+        </button>
+        <button
+          mat-button
+          [disabled]="!(this.uploadedFiles.length > 0)"
+          (click)="deleteAllFiles()"
+        >
+          Reset
+        </button>
+      </form>
+    </div>
+
+    @if (uploadedFiles.length > 0) {
+    <div class="images-container">
+      @for (image of uploadedFiles; track $index; let i = $index) {
+      <mat-card
+        class="image-card"
+        appearance="outlined"
+        [class.selected]="selectedImageIndex === i"
+        (click)="selectCard(i)"
+      >
+        <mat-card-header>
+          <mat-card-subtitle>{{ image.blob.name }}</mat-card-subtitle>
+        </mat-card-header>
+        <img
+          class="image-card-image"
+          mat-card-image
+          [src]="image.sanitized"
+          alt="{{ image.blob.name }}"
+        />
+
+        <mat-card-actions>
+          <button mat-icon-button (click)="descriptors(i)">
+            <mat-icon>bar_chart</mat-icon>
+          </button>
+          <div>
+            <button mat-icon-button color="warn" (click)="deleteFile(i)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card-actions>
+      </mat-card>
+      }
+    </div>
+    }
+  </mat-step>
+  <mat-step>
+    <ng-template matStepLabel>Results</ng-template>
+    <div class="results-outer-container">
+      <div>
+        <button mat-button matStepperPrevious>Back</button>
+        <button mat-button (click)="[deleteAllFiles(), stepper.reset()]">
+          Reset
+        </button>
+      </div>
+      @if (results.length > 0) {
+      <div class="results-container">
+        @for (result of results; track $index; let i = $index) {
+        <mat-card class="result-card" appearance="outlined">
+          <mat-card-header>
+            <mat-card-subtitle>{{ result.title }}</mat-card-subtitle>
+          </mat-card-header>
+          <img mat-card-image [src]="result.image" alt="title" />
+          <mat-card-content>
+            <p>Similarity: {{ result.similarity }}</p>
+          </mat-card-content>
+        </mat-card>
+        }
+      </div>
+      }
+    </div>
+  </mat-step>
+</mat-stepper>
