@@ -133,6 +133,11 @@ mat-card-actions {
   justify-content: space-between;
 }
 
+.canvas-box {
+  width: 500px;
+  height: 500px;
+}
+
 .logout-btn {
   position: absolute;
   bottom: 16px;

@@ -5,6 +5,8 @@ import {
   OnInit,
   Input,
   ChangeDetectionStrategy,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import {
@@ -42,6 +44,9 @@ import {
   MatDialogTitle,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
+import * as THREE from 'three';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 interface result {
   title: string;
@@ -268,44 +273,72 @@ export class ThreeDSearchComponent implements OnInit {
 })
 export class DescriptorsDialog {
   constructor(
-    private plot: PlotlyService,
     @Inject(MAT_DIALOG_DATA) public data: { index: number; uploadedFiles: any }
   ) {}
-
-  private _imageSearchService = inject(ImageSearchService);
+  private canvas!: HTMLCanvasElement;
+  private scene!: THREE.Scene;
+  private camera!: THREE.PerspectiveCamera;
+  private renderer!: THREE.WebGLRenderer;
   readonly dialogRef = inject(MatDialogRef<DescriptorsDialog>);
 
   ngOnInit(): void {
     const { index, uploadedFiles } = this.data;
     const selectedFile = uploadedFiles[index].blob;
-    let humoments: number[] = [];
-
-    this._imageSearchService.imageDescriptors(selectedFile).subscribe(
-      (results) => {
-        console.log('Descriptors:', results);
-        this.plot.plotHist(
-          'histPlot',
-          results.color_histogram[0],
-          results.color_histogram[1],
-          results.color_histogram[2]
-        );
-
-        this.plot.plotDominantColors(
-          'dominantColorContainer',
-          results.dominant_colors
-        );
-
-        humoments = results.hu_moments;
-        const humomentsDiv = document.getElementById('humomentsContainer');
-        for (let i = 0; i < humoments.length; i++) {
-          const p = document.createElement('p');
-          p.textContent = `Hu Moment ${i + 1}: ${humoments[i]}`;
-          humomentsDiv?.appendChild(p);
+    const reader = new FileReader();
+    this.initThree();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      const loader = new OBJLoader();
+      const obj = loader.parse(content);
+      obj.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.material = new THREE.MeshPhongMaterial({
+            color: 0xffffff,
+          });
         }
-      },
-      (error) => {
-        console.error('Descriptors error:', error);
-      }
+      });
+      obj.position.set(0, 0, 0);
+      this.scene.add(obj);
+    };
+    reader.readAsText(selectedFile);
+  }
+
+  private initThree() {
+    this.canvas = document.getElementById('canvas-box') as HTMLCanvasElement;
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+    const skyColor = 0xb1e1ff;
+    const groundColor = 0xb97a20;
+    const intensity = 2;
+    const hem_light = new THREE.HemisphereLight(
+      skyColor,
+      groundColor,
+      intensity
     );
+    this.scene.add(hem_light);
+    const color = 0xffffff;
+
+    const dir_light = new THREE.DirectionalLight(color, intensity);
+    dir_light.position.set(-1000, 200, 200);
+    dir_light.target.position.set(0, 0, 0);
+    this.scene.add(dir_light);
+    this.scene.add(dir_light.target);
+
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+    });
+    this.renderer.setSize(500, 500);
+    this.camera.position.set(-1000, -200, -200);
+
+    const controls = new OrbitControls(this.camera, this.canvas);
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    this.animate();
+  }
+
+  private animate() {
+    requestAnimationFrame(() => this.animate());
+    this.renderer.render(this.scene, this.camera);
   }
 }
