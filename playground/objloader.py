@@ -44,7 +44,15 @@ class OBJ:
                         norms.append(int(w[2]))
                     else:
                         norms.append(0)
-                self.faces.append((face, norms, texcoords, material))
+                if enable_opengl == True:
+                    self.faces.append((face, norms, texcoords, material))
+                else:
+                    if len(face) == 3:
+                        self.faces.append(face)
+                    elif len(face) == 4:
+                        self.faces.append([face[0], face[1], face[2]])
+                        self.faces.append([face[0], face[2], face[3]])
+                    
 
         if self.enable_opengl:
             self.gl_list = glGenLists(1)
