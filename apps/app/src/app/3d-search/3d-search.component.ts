@@ -121,8 +121,6 @@ export class ThreeDSearchComponent implements OnInit {
     });
   }
 
-  selectedImageIndex: number | null = null;
-
   firstFormGroup = this._formBuilder.group({
     firstCtrl: ['', Validators.required],
     secondCtrl: ['', Validators.required],
@@ -140,6 +138,7 @@ export class ThreeDSearchComponent implements OnInit {
   matcher = new MyErrorStateMatcher();
   isLinear = true;
   uploadedFiles: { blob: File; sanitized: string }[] = [];
+  selectedImageIndex: number | null = null;
   objFileName = 'Select your 3D object';
   fileThumbnailName = "Select the object's thumbnail";
   results: result[] = [];

@@ -120,7 +120,31 @@
           Reset
         </button>
       </div>
-      @if (results.length > 0) {
+      @if (selectedImageIndex !== null) {
+      <div class="selected-card-container">
+        <h3>Selected Image</h3>
+        <mat-card class="image-card" appearance="outlined">
+          <mat-card-header>
+            <mat-card-subtitle>{{
+              uploadedFiles[selectedImageIndex].blob.name
+            }}</mat-card-subtitle>
+          </mat-card-header>
+          <img
+            class="image-card-image"
+            mat-card-image
+            [src]="uploadedFiles[selectedImageIndex].sanitized"
+            alt="{{ uploadedFiles[selectedImageIndex].blob.name }}"
+          />
+
+          <mat-card-actions>
+            <button mat-icon-button (click)="descriptors(selectedImageIndex)">
+              <mat-icon>bar_chart</mat-icon>
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+      } @if (results.length > 0) {
+      <h3>Results</h3>
       <div class="results-container">
         @for (result of results; track $index; let i = $index) {
         <mat-card class="result-card" appearance="outlined">
