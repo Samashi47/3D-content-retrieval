@@ -1,4 +1,4 @@
-from flask import Response, request, Flask
+from flask import Response, request, Flask, send_file, send_from_directory
 from flask_cors import CORS
 import json
 import datetime
@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.backends import default_backend
 import base64
 import dotenv
+import logging
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -27,12 +28,19 @@ def encode_image_to_base64(image_path):
 
 
 app = Flask(__name__)
+app.logger.setLevel(logging.CRITICAL)
+handler = logging.FileHandler("app.log")
+app.logger.addHandler(handler)
 CORS(app)
 
 
 @app.route("/", methods=["POST"])
 def home():
-    print(request.json)
+    app.logger.info("This is an INFO message")
+    app.logger.debug("This is a DEBUG message")
+    app.logger.warning("This is a WARNING message")
+    app.logger.error("This is an ERROR message")
+    app.logger.critical("This is a CRITICAL message")
     return "Hello, World!"
 
 
@@ -107,6 +115,26 @@ def register():
         mimetype="application/json",
         status=201,
     )
+
+
+@app.route("/download-model", methods=["GET", "POST"])
+def download():
+    # filename = request.json["filename"]
+    filename = "Abstractshape1.obj"
+    app.logger.info(f"changed to {filename}")
+    uploads = os.path.join(app.root_path, "assets")
+    app.logger.info(f"uploads: {uploads}")
+    try:
+        app.logger.info(f"Sending {filename} from {uploads}")
+        return send_file(
+            os.path.join(uploads, filename),
+            mimetype="model/obj",
+            as_attachment=True,
+            download_name=filename,
+        )
+    except Exception as e:
+        app.logger.error(f"Error: {e}")
+        return str(e)
 
 
 if __name__ == "__main__":

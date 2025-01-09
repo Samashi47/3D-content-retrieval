@@ -28,8 +28,6 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../auth.service';
-import { ImageSearchService } from '../image-search.service';
-import { PlotlyService } from '../plotly.service';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatCardModule } from '@angular/material/card';
@@ -47,6 +45,7 @@ import {
 import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { SearchService } from '../search.service';
 
 interface result {
   title: string;
@@ -110,6 +109,7 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
 export class ThreeDSearchComponent implements OnInit {
   private _formBuilder = inject(FormBuilder);
   private _authService = inject(AuthService);
+  private _search = inject(SearchService);
   private _router = inject(Router);
   private _domSanitizer = inject(DomSanitizer);
   private _snackBar = inject(MatSnackBar);
@@ -254,6 +254,28 @@ export class ThreeDSearchComponent implements OnInit {
   logout(): void {
     this._authService.logout();
     this._router.navigate(['/login']);
+  }
+
+  saveAs(blob: Blob, fileName: string) {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = window.URL.createObjectURL(blob);
+    link.click();
+    window.URL.revokeObjectURL(link.href);
+  }
+
+  downloadModel(index: number): void {
+    //const filename = this.results[index].title;
+    const filename = 'model.obj';
+    this._search.downloadModel(filename).subscribe(
+      (response: any) => {
+        console.log(response);
+        this.saveAs(response, filename);
+      },
+      (error: any) => {
+        console.log(error);
+      }
+    );
   }
 }
 
