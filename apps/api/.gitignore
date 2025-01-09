@@ -159,3 +159,4 @@ cython_debug/
 # SSH keys
 .ssh/
 .ssh
+assets/ 
