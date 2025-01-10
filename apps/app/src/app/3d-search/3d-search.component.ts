@@ -300,6 +300,23 @@ export class ThreeDSearchComponent implements OnInit {
         similarity: Math.random(),
       });
     }
+    if (this.selectedImageIndex !== null) {
+      this._search
+        .search(
+          this.uploadedFiles[this.selectedImageIndex].blob,
+          numberOfResults
+        )
+        .subscribe(
+          (response: any) => {
+            console.log(response);
+          },
+          (error: any) => {
+            console.log(error);
+          }
+        );
+    } else {
+      console.error('No image selected');
+    }
   }
 }
 

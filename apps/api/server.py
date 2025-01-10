@@ -12,6 +12,7 @@ from cryptography.hazmat.backends import default_backend
 import base64
 import dotenv
 import logging
+from logic.search import RetrieveModels, process_query_model
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -135,6 +136,39 @@ def download():
     except Exception as e:
         app.logger.error(f"Error: {e}")
         return str(e)
+
+
+@app.route("/search", methods=["POST"])
+def search():
+    if "model" not in request.files:
+        return Response(
+            json.dumps({"message": "No file part"}),
+            mimetype="application/json",
+            status=400,
+        )
+
+    model = request.files["model"]
+    number_of_results = request.form["numberOfResults"]
+    if model.filename == "":
+        return Response(
+            json.dumps({"message": "No selected file"}),
+            mimetype="application/json",
+            status=400,
+        )
+
+    source_folder = "assets/3DPottery"
+    thumbnails_folder = "Thumbnails"
+    dest_folder = os.path.join(app.root_path, "temp")
+    model.save(os.path.join(dest_folder, model.filename))
+    model.close()
+    query_desc = process_query_model(dest_folder, model.filename)
+    print(number_of_results)
+    # models, similarities = RetrieveModels(thumbnails_folder, query_desc, model.filename, n=number_of_results)
+    return Response(
+        json.dumps({"message": "File uploaded successfully"}),
+        mimetype="application/json",
+        status=201,
+    )
 
 
 if __name__ == "__main__":
