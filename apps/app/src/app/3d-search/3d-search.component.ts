@@ -128,6 +128,7 @@ export class ThreeDSearchComponent implements OnInit {
 
   secondFormGroup = this._formBuilder.group({
     secondCtrl: [null as number | null, Validators.required],
+    thirdCtrl: ['5', Validators.required],
   });
 
   thirdCtrl = new FormControl('', Validators.required);
@@ -141,6 +142,7 @@ export class ThreeDSearchComponent implements OnInit {
   selectedImageIndex: number | null = null;
   objFileName = 'Select your 3D object';
   fileThumbnailName = "Select the object's thumbnail";
+  numberOfResults = '5';
   results: result[] = [];
 
   ngOnInit(): void {
@@ -219,6 +221,17 @@ export class ThreeDSearchComponent implements OnInit {
     }
   }
 
+  selectNumberOfResults(): void {
+    console.log(this.numberOfResults);
+    const numberOfResults = parseInt(this.numberOfResults);
+    if (this.results.length > numberOfResults) {
+      this.results = this.results.slice(0, numberOfResults);
+    } else {
+      this.results = [];
+      this.search();
+    }
+  }
+
   deleteFile(index: number): void {
     if (this.selectedImageIndex === index) {
       this.selectedImageIndex = null;
@@ -276,6 +289,17 @@ export class ThreeDSearchComponent implements OnInit {
         console.log(error);
       }
     );
+  }
+
+  search(): void {
+    const numberOfResults = parseInt(this.numberOfResults);
+    for (let i = 0; i < numberOfResults; i++) {
+      this.results.push({
+        title: this.uploadedFiles[0].blob.name,
+        image: this.uploadedFiles[0].sanitized,
+        similarity: Math.random(),
+      });
+    }
   }
 }
 

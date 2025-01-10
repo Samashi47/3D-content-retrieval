@@ -52,18 +52,37 @@
             required
           />
         </mat-form-field>
+
         <button mat-button [disabled]="firstFormGroup.invalid" type="submit">
           Upload
         </button>
       </form>
       <form [formGroup]="secondFormGroup">
         <input type="hidden" formControlName="secondCtrl" required />
+        <mat-form-field>
+          <mat-select
+            required
+            formControlName="thirdCtrl"
+            [errorStateMatcher]="matcher"
+            [(value)]="numberOfResults"
+            (selectionChange)="selectNumberOfResults()"
+          >
+            <mat-option value="5">5</mat-option>
+            <mat-option value="10">10</mat-option>
+            <mat-option value="15">15</mat-option>
+            <mat-option value="20">20</mat-option>
+          </mat-select>
+          @if (thirdCtrl.hasError('required')) {
+          <mat-error>You must make a selection</mat-error>
+          }
+        </mat-form-field>
         <button
           mat-button
           matStepperNext
           [disabled]="
             secondFormGroup.invalid || !(this.uploadedFiles.length > 0)
           "
+          (click)="search()"
         >
           Next
         </button>
@@ -112,12 +131,31 @@
   <mat-step>
     <ng-template matStepLabel>Results</ng-template>
     <div class="results-outer-container">
-      <div>
-        <button mat-button matStepperPrevious>Back</button>
-        <button mat-button (click)="[deleteAllFiles(), stepper.reset()]">
-          Reset
-        </button>
+      <div class="upload-form-container">
+        <div>
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button (click)="[deleteAllFiles(), stepper.reset()]">
+            Reset
+          </button>
+        </div>
+        <mat-form-field>
+          <mat-select
+            required
+            [errorStateMatcher]="matcher"
+            [(value)]="numberOfResults"
+            (selectionChange)="selectNumberOfResults()"
+          >
+            <mat-option value="5">5</mat-option>
+            <mat-option value="10">10</mat-option>
+            <mat-option value="15">15</mat-option>
+            <mat-option value="20">20</mat-option>
+          </mat-select>
+          @if (thirdCtrl.hasError('required')) {
+          <mat-error>You must make a selection</mat-error>
+          }
+        </mat-form-field>
       </div>
+
       @if (selectedImageIndex !== null) {
       <div class="selected-card-container">
         <h3>Selected Image</h3>
@@ -143,28 +181,32 @@
       </div>
       <div class="selected-card-container">
         <h3>Results</h3>
-        <mat-card class="image-card" appearance="outlined">
-          <mat-card-header>
-            <mat-card-subtitle>{{
-              uploadedFiles[selectedImageIndex].blob.name
-            }}</mat-card-subtitle>
-          </mat-card-header>
-          <img
-            class="image-card-image"
-            mat-card-image
-            [src]="uploadedFiles[selectedImageIndex].sanitized"
-            alt="{{ uploadedFiles[selectedImageIndex].blob.name }}"
-          />
-
-          <mat-card-actions>
-            <button mat-icon-button (click)="descriptors(selectedImageIndex)">
-              <mat-icon>bar_chart</mat-icon>
-            </button>
-            <button mat-icon-button (click)="downloadModel(selectedImageIndex)">
-              <mat-icon>download</mat-icon>
-            </button>
-          </mat-card-actions>
-        </mat-card>
+        <div class="results-container">
+          @for (result of results; track $index; let i = $index) {
+          <mat-card class="image-card" appearance="outlined">
+            <mat-card-header>
+              <mat-card-subtitle>{{ result.title }}</mat-card-subtitle>
+            </mat-card-header>
+            <img
+              class="image-card-image"
+              mat-card-image
+              [src]="result.image"
+              alt="{{ result.title }}"
+            />
+            <mat-card-content>
+              <p>Similarity: {{ result.similarity }}</p>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-icon-button (click)="descriptors(i)">
+                <mat-icon>bar_chart</mat-icon>
+              </button>
+              <button mat-icon-button (click)="downloadModel(i)">
+                <mat-icon>download</mat-icon>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+          }
+        </div>
       </div>
       }
       <!--
