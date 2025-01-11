@@ -1,17 +1,15 @@
-from OpenGL.GL import *
-
-
+# Description: This file contains the logic to load the obj file.
 class OBJ:
-    def __init__(self, filename, swapyz=False, enable_opengl=True):
+    def __init__(self, file, swapyz=False):
         """Loads a Wavefront OBJ file."""
         self.vertices = []
         self.normals = []
         self.texcoords = []
         self.faces = []
-        self.enable_opengl = enable_opengl
 
         material = None
-        for line in open(filename, "r"):
+        for line in file:
+            line = str(line, "utf-8")
             if line.startswith("#"):
                 continue
             values = line.split()
@@ -46,32 +44,8 @@ class OBJ:
                         norms.append(int(w[2]))
                     else:
                         norms.append(0)
-                if enable_opengl == True:
-                    self.faces.append((face, norms, texcoords, material))
-                else:
-                    if len(face) == 3:
-                        self.faces.append(face)
-                    elif len(face) == 4:
-                        self.faces.append([face[0], face[1], face[2]])
-                        self.faces.append([face[0], face[2], face[3]])
-
-        if self.enable_opengl:
-            self.gl_list = glGenLists(1)
-            glNewList(self.gl_list, GL_COMPILE)
-            glEnable(GL_TEXTURE_2D)
-            glFrontFace(GL_CCW)
-            for face in self.faces:
-                vertices, normals, texture_coords, material = face
-
-                glColor(0.8, 0.8, 0.8)
-
-                glBegin(GL_POLYGON)
-                for i in range(len(vertices)):
-                    if normals[i] > 0:
-                        glNormal3fv(self.normals[normals[i] - 1])
-                    if texture_coords[i] > 0:
-                        glTexCoord2fv(self.texcoords[texture_coords[i] - 1])
-                    glVertex3fv(self.vertices[vertices[i] - 1])
-                glEnd()
-            glDisable(GL_TEXTURE_2D)
-            glEndList()
+                if len(face) == 3:
+                    self.faces.append(face)
+                elif len(face) == 4:
+                    self.faces.append([face[0], face[1], face[2]])
+                    self.faces.append([face[0], face[2], face[3]])
