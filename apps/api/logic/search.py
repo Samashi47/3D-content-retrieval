@@ -6,8 +6,6 @@ import numpy as np
 import random
 import shutil
 import os
-import dotenv
-
 
 def create_query_db(source_folder, dest_folder):
     if not os.path.exists(dest_folder):
@@ -51,7 +49,7 @@ def process_database_models(root_folder, not_indexed):
             continue
         for model_name in os.listdir(category_path):
             model_path = os.path.join(category_path, model_name)
-            model = OBJ(model_path, enable_opengl=False)
+            model = OBJ(model_path)
             if model is None:
                 continue
             if model_name in not_indexed:
@@ -126,12 +124,11 @@ def calculate_similarities(distances, weights=None):
 
 def get_top_images(similarities, x=5):
     top = similarities[:x]
-    return [(doc["model_name"], doc["similarity"]) for doc in top]
+    return [{"model_name": doc["model_name"], "category": doc["category"], "similarity": doc["similarity"]} for doc in top]
 
 
-def process_query_model(dest_folder, rand_img):
-    query_path = os.path.join(dest_folder, rand_img)
-    model = OBJ(query_path, enable_opengl=False)
+def process_query_model(file):
+    model = OBJ(file)
     if model is None:
         return None
     zernike = zernike_moments(model, order=3, scale_input=True)
@@ -147,7 +144,7 @@ def rename_files_to_lowercase(directory):
             os.rename(old_path, new_path)
 
 
-def RetrieveModels(folder, query_desc, rand_model, n=5):
+def RetrieveModels(query_desc, n=5):
     if query_desc is None:
         print("Invalid query image.")
     else:
@@ -157,4 +154,4 @@ def RetrieveModels(folder, query_desc, rand_model, n=5):
         similarities = calculate_similarities(distances)
         top_images = get_top_images(similarities, n)
 
-        return top_images, distances
+        return top_images
