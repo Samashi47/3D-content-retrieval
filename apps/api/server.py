@@ -120,15 +120,15 @@ def register():
 
 @app.route("/download-model", methods=["GET", "POST"])
 def download():
-    # filename = request.json["filename"]
-    filename = "Abstractshape1.obj"
+    filename = request.json["filename"] + ".obj"
+    category = request.json["category"]
     app.logger.info(f"changed to {filename}")
-    uploads = os.path.join(app.root_path, "assets")
+    uploads = os.path.join(app.root_path, "assets/3DPottery")
     app.logger.info(f"uploads: {uploads}")
     try:
         app.logger.info(f"Sending {filename} from {uploads}")
         return send_file(
-            os.path.join(uploads, filename),
+            os.path.join(uploads, category, filename),
             mimetype="model/obj",
             as_attachment=True,
             download_name=filename,
@@ -148,28 +148,30 @@ def search():
         )
 
     model = request.files["model"]
-    number_of_results = request.form["numberOfResults"]
+    number_of_results = int(request.form["numberOfResults"])
     if model.filename == "":
         return Response(
             json.dumps({"message": "No selected file"}),
             mimetype="application/json",
             status=400,
         )
+    thumbnails_folder = "assets/Thumbnails"
+    query_desc = process_query_model(model.stream)
+    models = RetrieveModels(query_desc, n=number_of_results)
+    results = [
+        {
+                "model_name": model["model_name"],
+                "category": model["category"],
+                "thumbnail": encode_image_to_base64(os.path.join(thumbnails_folder, model["category"], model["model_name"] + ".jpg")),
+        }
+        for model in models
+    ]
 
-    source_folder = "assets/3DPottery"
-    thumbnails_folder = "Thumbnails"
-    dest_folder = os.path.join(app.root_path, "temp")
-    model.save(os.path.join(dest_folder, model.filename))
-    model.close()
-    query_desc = process_query_model(dest_folder, model.filename)
-    print(number_of_results)
-    # models, similarities = RetrieveModels(thumbnails_folder, query_desc, model.filename, n=number_of_results)
-    return Response(
-        json.dumps({"message": "File uploaded successfully"}),
-        mimetype="application/json",
-        status=201,
+    response = Response(
+        json.dumps(results), mimetype="application/json", status=200
     )
 
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host="0.0.0.0")
