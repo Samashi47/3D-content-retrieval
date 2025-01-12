@@ -41,7 +41,56 @@ thumbnails_folder = "Thumbnails"
 # print("Similarity between 1 and 3 using Fourier Shape Descriptor:", compute_distance_fourier(feature_vector1, feature_vector3, metric='l2'))
 
 # Search
-query_imgs = os.listdir(dest_folder)
-rand_model = random.choice(query_imgs)
-query_desc = process_query_model(dest_folder, rand_model)
-RetrieveModels(thumbnails_folder, query_desc, rand_model, n=15)
+if __name__ == "__main__":
+    query_imgs = os.listdir(dest_folder)
+    to_test = [
+        "00110054.obj",
+        "3dmillenium_bottle01.obj",
+        "3dmillenium_bowl01.obj",
+        "3dmillenium_bowl03.obj",
+        "5dsom_fakej.obj",
+        "abstractshape35.obj",
+        "abstractshape5.obj",
+        "alabastron24.obj",
+        "alabastron48.obj",
+        "amphora14.obj",
+        "amphora16.obj",
+        "amphora501ncon.obj",
+        "ark_hm_107_hi.obj",
+        "ark_hm_1300_hi.obj",
+        "ark_hm_202_hi.obj",
+        "ark_hm_226_hi.obj",
+        "ark_hm_309_hi.obj",
+        "ark_hm_33_hi.obj",
+        "ark_hm_453_hi.obj",
+        "ark_hm_518_hi.obj",
+        "likithosqp.obj",
+        "london b 658.obj",
+        "london d 20.obj",
+        "london d 51.obj",
+        "london d 58.obj",
+        "london d 61.obj",
+        "london e 180.obj",
+        "london e 233.obj",
+        "london f 90_1.obj",
+        "london f 90_5.obj",
+        "psykter0.obj",
+        "psykter17.obj",
+        "psykter2.obj",
+        "psykter27.obj",
+        "psykter34.obj",
+        "psykter6.obj",
+        "tsi_enst_fr_cp_vase_1305b_mr.obj",
+        "tsi_enst_fr_cp_vase_1305_lr.obj",
+        "visiting_grave.obj",
+    ]
+    for i, img in enumerate(query_imgs, start=1):
+        if img not in to_test:
+            continue
+        print(f"------------------- {i} -------------------")
+        print("Query image: ", img)
+        query_desc = process_query_model(dest_folder, img)
+        if query_desc["zernike"] == []:
+            query_desc["zernike"] = np.zeros(6)
+        top_images, _ = RetrieveModels(thumbnails_folder, query_desc, img, n=20)
+        print("Top images: ", top_images)

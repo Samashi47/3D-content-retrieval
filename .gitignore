@@ -175,3 +175,4 @@ cython_debug/
 pyopengl/
 query_models/
 Thumbnails/
+benchmark/
