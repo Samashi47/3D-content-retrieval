@@ -124,8 +124,6 @@ export class ThreeDSearchComponent implements OnInit {
   isLinear = true;
   uploadedFiles: { blob: File; sanitized: string }[] = [];
   selectedImageIndex: number | null = null;
-  objFileName = 'Select your 3D object';
-  fileThumbnailName = "Select the object's thumbnail";
   numberOfResults = '5';
   results: searchResult[] = [];
 
@@ -139,8 +137,17 @@ export class ThreeDSearchComponent implements OnInit {
     return this._domSanitizer.bypassSecurityTrustUrl(url);
   }
 
-  updateObjFileName(event: any): void {
-    this.objFileName = event.target.files[0].name;
+  selectFiles(event: any): void {
+    if (event.target.files) {
+      const l = this.uploadedFiles.length;
+      for (let i = 0; i < event.target.files.length; i++) {
+        const file = event.target.files[i];
+        this.uploadedFiles.push({
+          blob: file,
+          sanitized: '',
+        });
+      }
+    }
   }
 
   submitFile(): void {
@@ -161,9 +168,6 @@ export class ThreeDSearchComponent implements OnInit {
         this.uploadedFiles[this.uploadedFiles.length - 1].sanitized = e.target
           ?.result as string;
       };*/
-
-      this.objFileName = 'Select your 3D object';
-      this.fileThumbnailName = "Select the object's thumbnail";
       objFileInput.value = '';
     }
   }
@@ -186,7 +190,6 @@ export class ThreeDSearchComponent implements OnInit {
       reader.onload = (e) => {
         this.uploadedFiles[index].sanitized = e.target?.result as string;
       };
-      this.fileThumbnailName = 'Select the object thumbnail';
       event.target.value = '';
     }
   }
@@ -231,8 +234,6 @@ export class ThreeDSearchComponent implements OnInit {
     this.selectedImageIndex = null;
     this.secondFormGroup.get('secondCtrl')?.setValue(null);
     this.results = [];
-    this.objFileName = 'Select your 3D object';
-    this.fileThumbnailName = "Select the object's thumbnail";
     objFileInput.value = '';
     thumbnailInput.value = '';
   }
