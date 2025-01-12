@@ -6,6 +6,8 @@ import numpy as np
 import random
 import shutil
 import os
+import dotenv
+
 
 def create_query_db(source_folder, dest_folder):
     if not os.path.exists(dest_folder):
@@ -33,10 +35,23 @@ def create_query_db(source_folder, dest_folder):
 
 
 def connect_to_db():
+    dotenv.load_dotenv()
     client = MongoClient(os.getenv("MONGO_URL"))
     db = client["3DPotteryDataset"]
     collection = db["descriptors"]
     return collection
+
+
+def rename_docs_to_lowercase():
+    collection = connect_to_db()
+
+    for doc in collection.find():
+        model_name = doc["model_name"]
+        new_model_name = model_name.lower()
+        collection.update_one(
+            {"model_name": model_name}, {"$set": {"model_name": new_model_name}}
+        )
+        print(f"Renamed {model_name} to {new_model_name}")
 
 
 def process_database_models(root_folder, not_indexed):
@@ -124,7 +139,14 @@ def calculate_similarities(distances, weights=None):
 
 def get_top_images(similarities, x=5):
     top = similarities[:x]
-    return [{"model_name": doc["model_name"], "category": doc["category"], "similarity": doc["similarity"]} for doc in top]
+    return [
+        {
+            "model_name": doc["model_name"],
+            "category": doc["category"],
+            "similarity": doc["similarity"],
+        }
+        for doc in top
+    ]
 
 
 def process_query_model(file):

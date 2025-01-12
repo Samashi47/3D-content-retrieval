@@ -12,7 +12,7 @@ from cryptography.hazmat.backends import default_backend
 import base64
 import dotenv
 import logging
-from logic.search import RetrieveModels, process_query_model
+from logic.search import RetrieveModels, process_query_model, connect_to_db
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -24,7 +24,9 @@ class JSONEncoder(json.JSONEncoder):
 
 def encode_image_to_base64(image_path):
     with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+        encoded_string = "data:image/jpeg;base64," + base64.b64encode(
+            image_file.read()
+        ).decode("utf-8")
     return encoded_string
 
 
@@ -122,9 +124,7 @@ def register():
 def download():
     filename = request.json["filename"] + ".obj"
     category = request.json["category"]
-    app.logger.info(f"changed to {filename}")
-    uploads = os.path.join(app.root_path, "assets/3DPottery")
-    app.logger.info(f"uploads: {uploads}")
+    uploads = os.path.join(app.root_path, "assets/3D Models")
     try:
         app.logger.info(f"Sending {filename} from {uploads}")
         return send_file(
@@ -136,6 +136,45 @@ def download():
     except Exception as e:
         app.logger.error(f"Error: {e}")
         return str(e)
+
+
+@app.route("/query-descriptors", methods=["POST"])
+def query_descriptors():
+    if "model" not in request.files:
+        return Response(
+            json.dumps({"message": "No file part"}),
+            mimetype="application/json",
+            status=400,
+        )
+
+    model = request.files["model"]
+    if model.filename == "":
+        return Response(
+            json.dumps({"message": "No selected file"}),
+            mimetype="application/json",
+            status=400,
+        )
+
+    query_desc = process_query_model(model.stream)
+
+    response = Response(json.dumps(query_desc), mimetype="application/json", status=200)
+
+    return response
+
+
+@app.route("/result-descriptors", methods=["POST"])
+def result_descriptors():
+    filename = request.json["model_name"]
+    category = request.json["category"]
+    collection = connect_to_db()
+    model = collection.find_one({"model_name": filename, "category": category})
+    response_data = {"zernike": model["zernike"], "fourier": model["fourier"]}
+
+    response = Response(
+        json.dumps(response_data), mimetype="application/json", status=200
+    )
+
+    return response
 
 
 @app.route("/search", methods=["POST"])
@@ -160,18 +199,21 @@ def search():
     models = RetrieveModels(query_desc, n=number_of_results)
     results = [
         {
-                "model_name": model["model_name"],
-                "category": model["category"],
-                "thumbnail": encode_image_to_base64(os.path.join(thumbnails_folder, model["category"], model["model_name"] + ".jpg")),
+            "model_name": model["model_name"],
+            "category": model["category"],
+            "thumbnail": encode_image_to_base64(
+                os.path.join(
+                    thumbnails_folder, model["category"], model["model_name"] + ".jpg"
+                )
+            ),
+            "similarity": model["similarity"],
         }
         for model in models
     ]
-
-    response = Response(
-        json.dumps(results), mimetype="application/json", status=200
-    )
+    response = Response(json.dumps(results), mimetype="application/json", status=200)
 
     return response
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host="0.0.0.0")

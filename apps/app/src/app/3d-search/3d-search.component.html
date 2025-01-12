@@ -116,7 +116,7 @@
         />
 
         <mat-card-actions>
-          <button mat-icon-button (click)="descriptors(i)">
+          <button mat-icon-button (click)="descriptors('query', i)">
             <mat-icon>bar_chart</mat-icon>
           </button>
           <button mat-icon-button color="warn" (click)="deleteFile(i)">
@@ -173,7 +173,10 @@
           />
 
           <mat-card-actions>
-            <button mat-icon-button (click)="descriptors(selectedImageIndex)">
+            <button
+              mat-icon-button
+              (click)="descriptors('query', selectedImageIndex)"
+            >
               <mat-icon>bar_chart</mat-icon>
             </button>
           </mat-card-actions>
@@ -185,19 +188,21 @@
           @for (result of results; track $index; let i = $index) {
           <mat-card class="image-card" appearance="outlined">
             <mat-card-header>
-              <mat-card-subtitle>{{ result.title }}</mat-card-subtitle>
+              <mat-card-subtitle>{{
+                result.category + result.model_name
+              }}</mat-card-subtitle>
             </mat-card-header>
             <img
               class="image-card-image"
               mat-card-image
-              [src]="result.image"
-              alt="{{ result.title }}"
+              [src]="result.thumbnail"
+              alt="{{ result.model_name }}"
             />
             <mat-card-content>
               <p>Similarity: {{ result.similarity }}</p>
             </mat-card-content>
             <mat-card-actions>
-              <button mat-icon-button (click)="descriptors(i)">
+              <button mat-icon-button (click)="descriptors('result', i)">
                 <mat-icon>bar_chart</mat-icon>
               </button>
               <button mat-icon-button (click)="downloadModel(i)">

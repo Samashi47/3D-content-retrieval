@@ -47,31 +47,16 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SearchService } from '../search.service';
 
-interface result {
-  title: string;
-  image: SafeUrl;
+interface searchResult {
+  model_name: string;
+  category: string;
+  thumbnail: string;
   similarity: number;
 }
 
-interface weights {
-  dominant_colors: number;
-  color_histogram: number;
-  fourier_descriptors: number;
-  hu_moments: number;
-  edge_histogram: number;
-  gabor: number;
-}
-
-interface advancedResults {
-  images: result[];
-  weights: weights;
-  query_id: string;
-}
-
-interface imageDescriptors {
-  dominant_colors: number[][];
-  color_histogram: number[][];
-  hu_moments: number[];
+interface descriptors {
+  zernike: number[];
+  fourier: number[];
 }
 
 /** Error when invalid control is dirty, touched, or submitted. */
@@ -143,7 +128,7 @@ export class ThreeDSearchComponent implements OnInit {
   objFileName = 'Select your 3D object';
   fileThumbnailName = "Select the object's thumbnail";
   numberOfResults = '5';
-  results: result[] = [];
+  results: searchResult[] = [];
 
   ngOnInit(): void {
     if (!this._authService.isLoggedIn()) {
@@ -227,7 +212,6 @@ export class ThreeDSearchComponent implements OnInit {
     if (this.results.length > numberOfResults) {
       this.results = this.results.slice(0, numberOfResults);
     } else {
-      this.results = [];
       this.search();
     }
   }
@@ -258,10 +242,53 @@ export class ThreeDSearchComponent implements OnInit {
     thumbnailInput.value = '';
   }
 
-  descriptors(index: number): void {
-    this._dialog.open(DescriptorsDialog, {
-      data: { index: index, uploadedFiles: this.uploadedFiles },
-    });
+  descriptors(type: 'query' | 'result', index: number): void {
+    if (type === 'query') {
+      console.log(this.uploadedFiles[index].blob);
+      this._search.queryDescriptors(this.uploadedFiles[index].blob).subscribe(
+        (response: descriptors) => {
+          console.log(response);
+          this._dialog.open(DescriptorsDialog, {
+            data: {
+              blob: this.uploadedFiles[index].blob,
+              zernike: response.zernike,
+              fourier: response.fourier,
+            },
+          });
+        },
+        (error: any) => {
+          console.log(error);
+        }
+      );
+    } else {
+      const filename = this.results[index].model_name;
+      const category = this.results[index].category;
+      let blob: File | null = null;
+      this._search.downloadModel(filename, category).subscribe(
+        (response: any) => {
+          blob = response;
+        },
+        (error: any) => {
+          console.log(error);
+        }
+      );
+
+      this._search.resultDescriptors(filename, category).subscribe(
+        (response: descriptors) => {
+          console.log(response);
+          this._dialog.open(DescriptorsDialog, {
+            data: {
+              blob: blob,
+              zernike: response.zernike,
+              fourier: response.fourier,
+            },
+          });
+        },
+        (error: any) => {
+          console.log(error);
+        }
+      );
+    }
   }
 
   logout(): void {
@@ -278,12 +305,12 @@ export class ThreeDSearchComponent implements OnInit {
   }
 
   downloadModel(index: number): void {
-    //const filename = this.results[index].title;
-    const filename = 'model.obj';
-    this._search.downloadModel(filename).subscribe(
+    const filename = this.results[index].model_name;
+    const category = this.results[index].category;
+    this._search.downloadModel(filename, category).subscribe(
       (response: any) => {
         console.log(response);
-        this.saveAs(response, filename);
+        this.saveAs(response, filename + '.obj');
       },
       (error: any) => {
         console.log(error);
@@ -293,13 +320,7 @@ export class ThreeDSearchComponent implements OnInit {
 
   search(): void {
     const numberOfResults = parseInt(this.numberOfResults);
-    for (let i = 0; i < numberOfResults; i++) {
-      this.results.push({
-        title: this.uploadedFiles[0].blob.name,
-        image: this.uploadedFiles[0].sanitized,
-        similarity: Math.random(),
-      });
-    }
+
     if (this.selectedImageIndex !== null) {
       this._search
         .search(
@@ -307,8 +328,9 @@ export class ThreeDSearchComponent implements OnInit {
           numberOfResults
         )
         .subscribe(
-          (response: any) => {
+          (response: searchResult[]) => {
             console.log(response);
+            this.results = response;
           },
           (error: any) => {
             console.log(error);
@@ -335,7 +357,8 @@ export class ThreeDSearchComponent implements OnInit {
 })
 export class DescriptorsDialog {
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data: { index: number; uploadedFiles: any }
+    @Inject(MAT_DIALOG_DATA)
+    public data: { blob: File; zernike: number[]; fourier: number[] }
   ) {}
   private canvas!: HTMLCanvasElement;
   private scene!: THREE.Scene;
@@ -344,10 +367,10 @@ export class DescriptorsDialog {
   readonly dialogRef = inject(MatDialogRef<DescriptorsDialog>);
 
   ngOnInit(): void {
-    const { index, uploadedFiles } = this.data;
-    const selectedFile = uploadedFiles[index].blob;
+    const { blob, zernike, fourier } = this.data;
     const reader = new FileReader();
     this.initThree();
+
     reader.onload = (e) => {
       const content = e.target?.result as string;
       const loader = new OBJLoader();
@@ -361,8 +384,30 @@ export class DescriptorsDialog {
       });
       obj.position.set(0, 0, 0);
       this.scene.add(obj);
+      console.log('in here');
     };
-    reader.readAsText(selectedFile);
+    reader.readAsText(blob);
+    console.log('out there');
+    const descriptorsContainer = document.getElementById(
+      'descriptors-container'
+    );
+    const zernikeContainer = document.createElement('div');
+    zernikeContainer.innerHTML = '<h3>Zernike moments</h3>';
+    for (let i = 0; i < zernike.length; i++) {
+      const zernikeElement = document.createElement('div');
+      zernikeElement.innerHTML = `Zernike ${i}: ${zernike[i]}`;
+      zernikeContainer.appendChild(zernikeElement);
+    }
+    descriptorsContainer?.appendChild(zernikeContainer);
+
+    const fourierContainer = document.createElement('div');
+    fourierContainer.innerHTML = '<h3>Fourier descriptors</h3>';
+    for (let i = 0; i < fourier.length; i++) {
+      const fourierElement = document.createElement('div');
+      fourierElement.innerHTML = `Fourier ${i}: ${fourier[i]}`;
+      fourierContainer.appendChild(fourierElement);
+    }
+    descriptorsContainer?.appendChild(fourierContainer);
   }
 
   private initThree() {

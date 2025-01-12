@@ -9,9 +9,15 @@ import { map, shareReplay } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 
 interface searchResult {
-  title: string;
-  image: string;
+  model_name: string;
+  category: string;
+  thumbnail: string;
   similarity: number;
+}
+
+interface descriptors {
+  zernike: number[];
+  fourier: number[];
 }
 
 @Injectable({
@@ -20,14 +26,14 @@ interface searchResult {
 export class SearchService {
   constructor(private http: HttpClient) {}
 
-  downloadModel(filename: string): any {
+  downloadModel(filename: string, category: string): any {
     const headers = new HttpHeaders()
       .set('Accept', 'model/obj')
       .set('Content-Type', 'application/json');
 
     return this.http.post(
       `${API_URL}/download-model`,
-      { filename },
+      { filename, category },
       {
         headers,
         responseType: 'blob',
@@ -35,22 +41,33 @@ export class SearchService {
     );
   }
 
-  /*search(modelFile: Blob, numberOfResults: number): Observable<searchResult> {
+  queryDescriptors(modelFile: Blob): Observable<descriptors> {
     const formData = new FormData();
     formData.append('model', modelFile);
-    formData.append('numberOfResults', numberOfResults.toString());
-    console.log(formData);
     return this.http
-      .post<searchResult>(`${API_URL}/search`, formData)
+      .post<descriptors>(`${API_URL}/query-descriptors`, formData)
       .pipe(shareReplay());
-  }*/
-  search(modelFile: Blob, numberOfResults: number): Observable<any> {
+  }
+
+  resultDescriptors(
+    model_name: string,
+    category: string
+  ): Observable<descriptors> {
+    return this.http
+      .post<descriptors>(`${API_URL}/result-descriptors`, {
+        model_name,
+        category,
+      })
+      .pipe(shareReplay());
+  }
+
+  search(modelFile: Blob, numberOfResults: number): Observable<searchResult[]> {
     const formData = new FormData();
     formData.append('model', modelFile);
     formData.append('numberOfResults', numberOfResults.toString());
     console.log(formData);
     return this.http
-      .post<any>(`${API_URL}/search`, formData)
+      .post<searchResult[]>(`${API_URL}/search`, formData)
       .pipe(shareReplay());
   }
 }

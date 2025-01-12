@@ -62,7 +62,7 @@ export class AppLoginComponent implements OnInit {
 
   ngOnInit() {
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/image-search']);
+      this.router.navigate(['/3d-search']);
     }
   }
 
