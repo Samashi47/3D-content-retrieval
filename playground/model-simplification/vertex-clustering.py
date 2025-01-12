@@ -1,6 +1,6 @@
 import numpy as np
-import sys
 from objloader import OBJ
+import os
 
 class Mesh:
     def __init__(self):
@@ -20,18 +20,24 @@ class QuadricErrorMetric:
         return np.linalg.solve(A_dash, b_dash)
 
 class VertexClustering:
-    def __init__(self, mesh, cell_length_percentage):
+    def __init__(self, mesh, ratio):
         self.V = mesh.V
         self.F = mesh.F
         self.N = mesh.N
         self.FN = mesh.FN
-        self.cell_length = cell_length_percentage
-        self.min_coords = np.min(np.array(self.V), axis=0)
         self.newV = []
         self.newF = []
         self.newN = []
         self.newFN = []
-
+        
+        vertices = np.array(self.V)
+        bbox_min = np.min(vertices, axis=0)
+        bbox_max = np.max(vertices, axis=0)
+        bbox_size = bbox_max - bbox_min
+        max_dim = np.max(bbox_size)
+        self.cell_length = ratio * max_dim
+        self.min_coords = bbox_min
+        
     def compute(self):
 
         cell_map = {}
@@ -104,7 +110,7 @@ def read_obj(filename):
     mesh.N = [np.array(n) for n in obj.normals] if obj.normals else []
     
     for face in obj.faces:
-        vertices, normals, _, _ = face
+        vertices, normals = face
         mesh.F.append([v-1 for v in vertices[:3]])
         mesh.FN.append(normals[:3])
         
@@ -131,24 +137,31 @@ def export_obj(filename, vertices, faces, normals, face_normals):
         for face, fn in zip(faces, face_normals):
             f.write(f"f {face[0]+1}//{fn[0]} {face[1]+1}//{fn[1]} {face[2]+1}//{fn[2]}\n")
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <mesh_file>")
-        sys.exit(1)
-
-    filename = "Image Synthesis (OpenGL)/DVI2/input-models/" + sys.argv[1]
-    outfile = "Image Synthesis (OpenGL)/DVI2/output-models/" + sys.argv[1]
-    d = float(input("Enter percentage of the scene for the grid cell length: "))
-
-    mesh = read_obj(filename)
-
-    vc = VertexClustering(mesh, d)
-    vc.compute()
-
-    export_obj(outfile, vc.newV, vc.newF, vc.newN, vc.newFN)
-
-    print(f"Original mesh: {len(mesh.V)} vertices, {len(mesh.F)} faces")
-    print(f"Simplified mesh: {len(vc.newV)} vertices, {len(vc.newF)} faces")
-
+def simpify_db():
+    root_folder = "3D Models"
+    for category in os.listdir(root_folder):
+        category_path = os.path.join(root_folder, category)
+        if not os.path.isdir(category_path):
+            continue
+        if not os.path.exists(os.path.join("benchmark/3D Models S06", category)):
+            os.makedirs(os.path.join("benchmark/3D Models S06", category))
+            
+        for model_name in os.listdir(category_path):
+            model_path = os.path.join(category_path, model_name)
+            model = OBJ(model_path, enable_opengl=False)
+            if model is None:
+                continue
+            
+            print(f"Processing {model_name} from {category}...")
+            mesh = read_obj(os.path.join("3D Models", category, model_name))
+            d = 0.1
+            
+            vc = VertexClustering(mesh, d)
+            vc.compute()
+            outfile = os.path.join("benchmark/3D Models S06",category, model_name)
+            export_obj(outfile, vc.newV, vc.newF, vc.newN, vc.newFN)
+            print(f"Original mesh: {len(mesh.V)} vertices, {len(mesh.F)} faces")
+            print(f"Simplified mesh: {len(vc.newV)} vertices, {len(vc.newF)} faces")
+            
 if __name__ == "__main__":
-    main()
+    simpify_db()
