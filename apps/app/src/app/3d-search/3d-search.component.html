@@ -30,29 +30,6 @@
           />
         </mat-form-field>
 
-        <mat-form-field class="input-container">
-          <input
-            matInput
-            [value]="fileThumbnailName"
-            placeholder="Select the object's thumbnail"
-            readonly
-          />
-
-          <button mat-icon-button color="primary" class="upload-btn">
-            <mat-icon>attach_file</mat-icon>
-          </button>
-          <input
-            type="file"
-            accept="image/*"
-            id="fileThumbnailInput"
-            name="fileThumbnailInput"
-            class="file-input"
-            formControlName="secondCtrl"
-            (change)="updateThumbnailFileName($event)"
-            required
-          />
-        </mat-form-field>
-
         <button mat-button [disabled]="firstFormGroup.invalid" type="submit">
           Upload
         </button>
@@ -108,20 +85,42 @@
         <mat-card-header>
           <mat-card-subtitle>{{ image.blob.name }}</mat-card-subtitle>
         </mat-card-header>
+        @if (image.sanitized !== '') {
         <img
           class="image-card-image"
           mat-card-image
           [src]="image.sanitized"
           alt="{{ image.blob.name }}"
         />
+        } @else {
+        <img
+          class="image-card-image"
+          mat-card-image
+          src="unavailable.png"
+          alt="{{ image.blob.name }}"
+        />
+        }
 
         <mat-card-actions>
           <button mat-icon-button (click)="descriptors('query', i)">
             <mat-icon>bar_chart</mat-icon>
           </button>
-          <button mat-icon-button color="warn" (click)="deleteFile(i)">
-            <mat-icon>delete</mat-icon>
-          </button>
+          <div>
+            <button mat-icon-button (click)="triggerThumbnailInput(i)">
+              <mat-icon>upload</mat-icon>
+              <input
+                type="file"
+                accept="image/*"
+                id="ThumbnailFileInput {{ i }}"
+                name="ThumbnailFileInput"
+                style="display: none"
+                (change)="submitThumbnail(i, $event)"
+              />
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteFile(i)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </mat-card-actions>
       </mat-card>
       }

@@ -108,7 +108,6 @@ export class ThreeDSearchComponent implements OnInit {
 
   firstFormGroup = this._formBuilder.group({
     firstCtrl: ['', Validators.required],
-    secondCtrl: ['', Validators.required],
   });
 
   secondFormGroup = this._formBuilder.group({
@@ -144,55 +143,51 @@ export class ThreeDSearchComponent implements OnInit {
     this.objFileName = event.target.files[0].name;
   }
 
-  updateThumbnailFileName(event: any): void {
-    this.fileThumbnailName = event.target.files[0].name;
-  }
-
   submitFile(): void {
     const objFileInput = document.getElementById(
       'ObjFileInput'
     ) as HTMLInputElement;
-    const thumbnailInput = document.getElementById(
-      'fileThumbnailInput'
-    ) as HTMLInputElement;
 
-    if (
-      this.objFileName.replace(/\.[^/.]+$/, '') !==
-      this.fileThumbnailName.replace(/\.[^/.]+$/, '')
-    ) {
-      let snackBarRef = this.openSnackBar(
-        'Please select the same file for both fields',
-        'Close'
-      );
-
-      snackBarRef.afterDismissed().subscribe(() => {
-        return;
-      });
-      snackBarRef.onAction().subscribe(() => {
-        return;
-      });
-
-      return;
-    }
-
-    if (objFileInput?.files && thumbnailInput?.files) {
+    if (objFileInput?.files) {
       this.uploadedFiles.push({
         blob: objFileInput.files[0],
         sanitized: '',
       });
-
+      /*
       const reader = new FileReader();
       reader.readAsDataURL(thumbnailInput.files[0]);
 
       reader.onload = (e) => {
         this.uploadedFiles[this.uploadedFiles.length - 1].sanitized = e.target
           ?.result as string;
-      };
+      };*/
 
       this.objFileName = 'Select your 3D object';
       this.fileThumbnailName = "Select the object's thumbnail";
       objFileInput.value = '';
-      thumbnailInput.value = '';
+    }
+  }
+
+  triggerThumbnailInput(index: any): void {
+    const thumbnailInput = document.getElementById(
+      'ThumbnailFileInput ' + index
+    ) as HTMLInputElement;
+    thumbnailInput.click();
+  }
+
+  submitThumbnail(index: any, event: any): void {
+    console.log(index);
+    if (event.target.files) {
+      const file = event.target.files[0];
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+
+      reader.onload = (e) => {
+        this.uploadedFiles[index].sanitized = e.target?.result as string;
+      };
+      this.fileThumbnailName = 'Select the object thumbnail';
+      event.target.value = '';
     }
   }
 
