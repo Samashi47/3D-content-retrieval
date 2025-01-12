@@ -1,0 +1,223 @@
+<mat-stepper [linear]="isLinear" #stepper>
+  <mat-step [stepControl]="secondFormGroup">
+    <div class="upload-form-container">
+      <form [formGroup]="firstFormGroup" class="upload-form">
+        <ng-template matStepLabel>Upload your 3D objects</ng-template>
+        <mat-form-field class="input-container">
+          <input matInput placeholder="Select your 3D objects(s)" readonly />
+
+          <button mat-icon-button color="primary" class="upload-btn">
+            <mat-icon>attach_file</mat-icon>
+          </button>
+          <input
+            type="file"
+            accept=".obj"
+            id="ObjFileInput"
+            name="ObjFileInput"
+            class="file-input"
+            formControlName="firstCtrl"
+            (change)="selectFiles($event)"
+            required
+            multiple
+          />
+        </mat-form-field>
+      </form>
+      <form [formGroup]="secondFormGroup">
+        <input type="hidden" formControlName="secondCtrl" required />
+        <mat-form-field>
+          <mat-select
+            required
+            formControlName="thirdCtrl"
+            [errorStateMatcher]="matcher"
+            [(value)]="numberOfResults"
+            (selectionChange)="selectNumberOfResults()"
+          >
+            <mat-option value="5">5</mat-option>
+            <mat-option value="10">10</mat-option>
+            <mat-option value="15">15</mat-option>
+            <mat-option value="20">20</mat-option>
+          </mat-select>
+          @if (thirdCtrl.hasError('required')) {
+          <mat-error>You must make a selection</mat-error>
+          }
+        </mat-form-field>
+        <button
+          mat-button
+          matStepperNext
+          [disabled]="
+            secondFormGroup.invalid || !(this.uploadedFiles.length > 0)
+          "
+          (click)="search()"
+        >
+          Next
+        </button>
+        <button
+          mat-button
+          [disabled]="!(this.uploadedFiles.length > 0)"
+          (click)="deleteAllFiles()"
+        >
+          Reset
+        </button>
+      </form>
+    </div>
+
+    @if (uploadedFiles.length > 0) {
+    <div class="images-container">
+      @for (image of uploadedFiles; track $index; let i = $index) {
+      <mat-card
+        class="image-card"
+        appearance="outlined"
+        [class.selected]="selectedImageIndex === i"
+        (click)="selectCard(i)"
+      >
+        <mat-card-header>
+          <mat-card-subtitle>{{ image.blob.name }}</mat-card-subtitle>
+        </mat-card-header>
+        @if (image.sanitized !== '') {
+        <img
+          class="image-card-image"
+          mat-card-image
+          [src]="image.sanitized"
+          alt="{{ image.blob.name }}"
+        />
+        } @else {
+        <img
+          class="image-card-image"
+          mat-card-image
+          src="unavailable.png"
+          alt="{{ image.blob.name }}"
+        />
+        }
+
+        <mat-card-actions>
+          <button mat-icon-button (click)="descriptors('query', i)">
+            <mat-icon>bar_chart</mat-icon>
+          </button>
+          <div>
+            <button mat-icon-button (click)="triggerThumbnailInput(i)">
+              <mat-icon>upload</mat-icon>
+              <input
+                type="file"
+                accept="image/*"
+                id="ThumbnailFileInput {{ i }}"
+                name="ThumbnailFileInput"
+                style="display: none"
+                (change)="submitThumbnail(i, $event)"
+              />
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteFile(i)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card-actions>
+      </mat-card>
+      }
+    </div>
+    }
+  </mat-step>
+  <mat-step>
+    <ng-template matStepLabel>Results</ng-template>
+    <div class="results-outer-container">
+      <div class="upload-form-container">
+        <div>
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button (click)="[deleteAllFiles(), stepper.reset()]">
+            Reset
+          </button>
+        </div>
+        <mat-form-field>
+          <mat-select
+            required
+            [errorStateMatcher]="matcher"
+            [(value)]="numberOfResults"
+            (selectionChange)="selectNumberOfResults()"
+          >
+            <mat-option value="5">5</mat-option>
+            <mat-option value="10">10</mat-option>
+            <mat-option value="15">15</mat-option>
+            <mat-option value="20">20</mat-option>
+          </mat-select>
+          @if (thirdCtrl.hasError('required')) {
+          <mat-error>You must make a selection</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (selectedImageIndex !== null) {
+      <div class="selected-card-container">
+        <h3>Selected Image</h3>
+        <mat-card class="image-card" appearance="outlined">
+          <mat-card-header>
+            <mat-card-subtitle>{{
+              uploadedFiles[selectedImageIndex].blob.name
+            }}</mat-card-subtitle>
+          </mat-card-header>
+          <img
+            class="image-card-image"
+            mat-card-image
+            [src]="uploadedFiles[selectedImageIndex].sanitized"
+            alt="{{ uploadedFiles[selectedImageIndex].blob.name }}"
+          />
+
+          <mat-card-actions>
+            <button
+              mat-icon-button
+              (click)="descriptors('query', selectedImageIndex)"
+            >
+              <mat-icon>bar_chart</mat-icon>
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+      <div class="selected-card-container">
+        <h3>Results</h3>
+        <div class="results-container">
+          @for (result of results; track $index; let i = $index) {
+          <mat-card class="image-card" appearance="outlined">
+            <mat-card-header>
+              <mat-card-subtitle>{{
+                result.category + result.model_name
+              }}</mat-card-subtitle>
+            </mat-card-header>
+            <img
+              class="image-card-image"
+              mat-card-image
+              [src]="result.thumbnail"
+              alt="{{ result.model_name }}"
+            />
+            <mat-card-content>
+              <p>Similarity: {{ result.similarity }}</p>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-icon-button (click)="descriptors('result', i)">
+                <mat-icon>bar_chart</mat-icon>
+              </button>
+              <button mat-icon-button (click)="downloadModel(i)">
+                <mat-icon>download</mat-icon>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+          }
+        </div>
+      </div>
+      }
+      <!--
+      @if (results.length > 0) {
+      <h3>Results</h3>
+      <div class="results-container">
+        @for (result of results; track $index; let i = $index) {
+        <mat-card class="result-card" appearance="outlined">
+          <mat-card-header>
+            <mat-card-subtitle>{{ result.title }}</mat-card-subtitle>
+          </mat-card-header>
+          <img mat-card-image [src]="result.image" alt="title" />
+          <mat-card-content>
+            <p>Similarity: {{ result.similarity }}</p>
+          </mat-card-content>
+        </mat-card>
+        }
+      </div>
+      }-->
+    </div>
+  </mat-step>
+</mat-stepper>
