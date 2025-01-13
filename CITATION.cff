@@ -1,0 +1,34 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Content-Based 3D Models system
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Ahmed
+    family-names: Samady
+    email: ahmed.samady@etu.uae.ac.ma
+  - given-names: Fahd
+    family-names: Chibani
+    email: fahd.chibani@etu.uae.ac.ma
+  - given-names: Mohamed Amine
+    family-names: Fakhre-Eddine
+    email: contact@fakhreeddine.dev
+repository-code: >-
+  https://github.com/Samashi47/3D-content-retrieval
+abstract: >-
+Technologies for creating digital 3D models of actual items and using them in a range of fields, including engineering, medical, and cultural heritage, have been more widely available in recent years. Within this context, content-based 3D object retrieval is emerging as a key area of study. Pottery \cite{ref1} is one of the datasets under investigation, and it served as the foundation for this article. This article presents our two-week content-based 3D models retrieval system's theory, design concepts, implementation, and performance results. Additionally, we recommend the use of strong shape descriptors, such as Fourier descriptors and 3D Zernike moments, which are invariant under transformations, short, easy to index, and descriptive. The 3D content retrieval system performs well for certain categories like Abstract, Alabastron, and Amphora, but Mug and Native American - Effigy consistently underperform, indicating potential issues. Mesh simplification, particularly with larger cell sizes, introduces a trade-off between computational efficiency and retrieval performance. While simplification reduces model complexity, it also leads to a decline in precision, especially for categories already challenging for the system. Finally, we presented our implementation, confirming the theoretical findings.
+keywords:
+  - 3D Model
+  - Content-Based, Descriptors
+  - Fourier Transform
+  - Retrieval
+  - Shape
+  - Simplification
+  - Zernike moments
+license: MIT
+date-released: "2025-01-13"
