@@ -72,6 +72,47 @@ Then, open the `.env` file and add the following line:
 MONGO_URL=<url>
 ```
 
+To be able to use the register and login functionalities, you need to generate jwt key and place it in a .ssh folder in the api directory:
+
+```shell
+openssl genrsa -out jwt-key 4096
+```
+
+to extract the corresponding public key:
+
+```shell
+openssl rsa -in jwt-key -pubout -out jwt-key.pub
+```
+
+then, move the keys to the .ssh folder:
+
+```shell
+mkdir .ssh
+mv jwt-key .ssh
+mv jwt-key.pub .ssh
+```
+
+also, you need to download the 3DPottery dataset from the following link:
+
+```shell
+http://www.ipet.gr/~akoutsou/benchmark/
+```
+And place the 3D Models and Thmbnail folders in the api\assets directory.
+The assets directory should look like this:
+
+```shell
+├───assets
+│   ├───3D Models
+│   │   ├───Abstract
+│   │   ├───Alabastron
+│   │   ├───Amphora
+│   │   ├───...
+│   └───Thumbnails
+│       ├───Abstract
+│       ├───Alabastron
+│       ├───Amphora
+│       ├───...
+```
 Then, you can run the following command to start the backend:
 
 ```shell
